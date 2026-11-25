@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}À propos — Mans&Co Magazine{% endblock %}
+
+{% block content %}
+<section class="hero hero-compact">
+    <p class="kicker"><i class="fa-solid fa-circle-info"></i> À propos</p>
+    <h1>Un magazine construit à la main</h1>
+</section>
+
+<div class="about-grid">
+    <div class="about-text">
+        <p><strong>Mans&amp;Co</strong> est un magazine en ligne indépendant. On y parle de culture, de technologie, de société, de voyages et de gastronomie — avec un parti pris simple : moins d'articles, mieux écrits.</p>
+        <p>Chaque article est relu avant publication, chaque rubrique est choisie avec soin. Si un sujet ne tient pas en tête, il ne fait pas la une.</p>
+        <ul class="about-list">
+            <li><i class="fa-solid fa-check"></i> Publication sans publicité</li>
+            <li><i class="fa-solid fa-check"></i> Newsletter sobre et occasionnelle</li>
+            <li><i class="fa-solid fa-check"></i> Commentaires ouverts et modérés</li>
+        </ul>
+    </div>
+    <div class="about-stats">
+        <div class="stat card-3d">
+            <i class="fa-solid fa-newspaper"></i>
+            <strong>{{ total_articles }}</strong>
+            <span>article{{ 's' if total_articles > 1 }} publié{{ 's' if total_articles > 1 }}</span>
+        </div>
+        <div class="stat card-3d">
+            <i class="fa-solid fa-layer-group"></i>
+            <strong>{{ total_categories }}</strong>
+            <span>rubriques</span>
+        </div>
+        <div class="stat card-3d">
+            <i class="fa-solid fa-heart"></i>
+            <strong>∞</strong>
+            <span>gratitude des lecteurs</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

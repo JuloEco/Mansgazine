@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Mans&Co Magazine — Culture, société, voyages et plus{% endblock %}
+
+{% block content %}
+<section class="hero{% if search %} hero-search-mode{% endif %}">
+    <p class="kicker"><i class="fa-solid fa-feather"></i> L'édition sans bruit</p>
+    <h1>{% if search %}Résultats pour « {{ search }} »{% else %}Des idées qui méritent le papier{% endif %}</h1>
+    <p class="hero-sub">{% if search %}{{ pagination.total }} article{{ 's' if pagination.total > 1 }} correspondent à votre recherche.{% else %}Culture, technologie, société, voyages et gastronomie : des articles relus, sourcés, et sans titre racoleur.{% endif %}</p>
+    <form class="hero-search" action="{{ url_for('index') }}" method="get">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="q" value="{{ search }}" placeholder="Rechercher un article…" aria-label="Rechercher">
+        <button type="submit" class="btn btn-gold btn-sm">Chercher</button>
+    </form>
+</section>
+
+{% if featured and not search and pagination.page == 1 %}
+<article class="featured card-3d">
+    <a href="{{ url_for('article', slug=featured.slug) }}" class="featured-link">
+        <div class="featured-body">
+            <span class="badge badge-gold"><i class="fa-solid fa-star"></i> À la une</span>
+            <h2>{{ featured.title }}</h2>
+            <p>{{ featured.excerpt }}</p>
+            <footer class="meta">
+                <span><i class="fa-solid fa-folder-open"></i> {{ featured.category_name or 'Général' }}</span>
+                <span><i class="fa-regular fa-eye"></i> {{ featured.views }} vues</span>
+                <span><i class="fa-regular fa-heart"></i> {{ featured.likes }}</span>
+            </footer>
+        </div>
+        <span class="cta"><i class="fa-solid fa-arrow-right-long"></i> Lire l'article</span>
+    </a>
+</article>
+{% endif %}
+
+<div class="section-head">
+    <h2>{% if search %}Résultats{% else %}Derniers articles{% endif %}</h2>
+    {% if search %}<a class="btn btn-ghost btn-sm" href="{{ url_for('index') }}"><i class="fa-solid fa-xmark"></i> Effacer la recherche</a>{% else %}<span class="section-line"></span>{% endif %}
+</div>
+
+{% if articles %}
+<div class="article-grid">
+    {% for art in articles %}
+    <article class="card article-card">
+        <a href="{{ url_for('article', slug=art.slug) }}">
+            <div class="card-media">
+                {% if art.image_url %}
+                <img src="{{ art.image_url }}" alt="" loading="lazy">
+                {% else %}
+                <span class="media-pattern"><i class="fa-solid fa-{{ ['newspaper', 'lightbulb', 'earth-europe', 'pen-nib', 'mug-hot', 'camera'][loop.index0 % 6] }} fa-3x"></i></span>
+                {% endif %}
+                {% if art.featured %}<span class="badge badge-gold badge-media"><i class="fa-solid fa-star"></i> À la une</span>{% endif %}
+            </div>
+        </a>
+        <div class="card-body">
+            {% if art.category_slug %}
+            <a class="badge badge-cat" href="{{ url_for('category', slug=art.category_slug) }}">{{ art.category_name }}</a>
+            {% endif %}
+            <h3><a href="{{ url_for('article', slug=art.slug) }}">{{ art.title }}</a></h3>
+            <p>{{ art.excerpt }}</p>
+            <footer class="meta">
+                <span><i class="fa-regular fa-clock"></i> {{ (art.content | wordcount) // 200 + 1 }} min de lecture</span>
+                <span><i class="fa-regular fa-eye"></i> {{ art.views }}</span>
+                <span><i class="fa-regular fa-heart"></i> {{ art.likes }}</span>
+            </footer>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+{% if pagination.pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% set args = ({} if not search else {'q': search}) %}
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('index', page=pagination.page - 1, **args) }}" class="page-btn"><i class="fa-solid fa-chevron-left"></i></a>
+    {% endif %}
+    {% for p in range(1, pagination.pages + 1) %}
+    <a href="{{ url_for('index', page=p, **args) }}" class="page-btn {{ 'current' if p == pagination.page else '' }}">{{ p }}</a>
+    {% endfor %}
+    {% if pagination.has_next %}
+    <a href="{{ url_for('index', page=pagination.page + 1, **args) }}" class="page-btn"><i class="fa-solid fa-chevron-right"></i></a>
+    {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<p class="empty-state">
+    <i class="fa-regular fa-face-frown fa-2x"></i><br>
+    {% if search %}Aucun article ne correspond à « {{ search }} ».{% else %}Pas encore d'article publié. Revenez bientôt !{% endif %}
+</p>
+{% endif %}
+{% endblock %}

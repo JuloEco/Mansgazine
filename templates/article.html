@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title }} — Mans&Co Magazine{% endblock %}
+{% block description %}{{ article.excerpt }}{% endblock %}
+
+{% block content %}
+<article class="article-full">
+    <header class="article-header">
+        {% if article.category_slug %}
+        <a class="badge badge-cat" href="{{ url_for('category', slug=article.category_slug) }}">
+            <i class="fa-solid fa-folder-open"></i> {{ article.category_name }}
+        </a>
+        {% endif %}
+        <h1>{{ article.title }}</h1>
+        <div class="meta meta-large">
+            <span title="Publié le {{ article.created_at }}"><i class="fa-regular fa-calendar"></i> Publié le {{ article.created_at | dt }}</span>
+            <span><i class="fa-regular fa-clock"></i> {{ (article.content | wordcount) // 200 + 1 }} min de lecture</span>
+            <span><i class="fa-regular fa-eye"></i> {{ article.views }} vues</span>
+        </div>
+    </header>
+
+    {% if article.image_url %}
+    <figure class="article-figure">
+        <img src="{{ article.image_url }}" alt="{{ article.title }}" loading="lazy">
+    </figure>
+    {% endif %}
+
+    <div class="article-content">
+        {% for paragraph in article.content.split('\n\n') %}
+        <p>{{ paragraph }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="article-actions">
+        <button class="btn {{ 'btn-gold' if liked else 'btn-outline' }} like-btn" type="button"
+                data-liked-article="{{ article.id }}"
+                aria-pressed="{{ 'true' if liked else 'false' }}">
+            <i class="fa-{{ 'solid' if liked else 'regular' }} fa-heart"></i>
+            <span class="like-count">{{ article['likes'] }}</span> j'aime
+        </button>
+        <a class="btn btn-ghost" href="{{ url_for('index') }}"><i class="fa-solid fa-arrow-left-long"></i> Tous les articles</a>
+    </div>
+
+    <section class="comments" id="commentaires">
+        <h2><i class="fa-regular fa-comments"></i> Commentaires <span class="count-pill">{{ comments | length }}</span></h2>
+
+        {% for c in comments %}
+        <div class="comment">
+            <div class="comment-avatar"><i class="fa-solid fa-user"></i></div>
+            <div class="comment-body">
+                <header>
+                    <strong>{{ c.author }}</strong>
+                    <small><i class="fa-regular fa-clock"></i> {{ c.created_at }}</small>
+                    {% if is_admin %}
+                    <form method="post" class="inline-form" action="{{ url_for('comment_delete', comment_id=c.id) }}">
+                        <button type="submit" class="icon-btn danger" title="Supprimer le commentaire" aria-label="Supprimer"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                    {% endif %}
+                </header>
+                <p>{{ c.content }}</p>
+            </div>
+        </div>
+        {% else %}
+        <p class="empty-state small"><i class="fa-regular fa-comment"></i> Soyez la première personne à commenter cet article.</p>
+        {% endfor %}
+
+        <form class="comment-form" method="post" action="{{ url_for('comment', slug=article.slug) }}">
+            <h3><i class="fa-solid fa-pen-clip"></i> Laisser un commentaire</h3>
+            <div class="form-row">
+                <input type="text" name="author" maxlength="60" placeholder="Votre nom" required>
+            </div>
+            <textarea name="content" rows="4" maxlength="2000" placeholder="Votre commentaire…" required></textarea>
+            <button type="submit" class="btn btn-navy"><i class="fa-solid fa-paper-plane"></i> Envoyer</button>
+        </form>
+    </section>
+
+    {% if related %}
+    <section class="related">
+        <h2><i class="fa-solid fa-book-open-reader"></i> À lire aussi</h2>
+        <div class="related-grid">
+            {% for r in related %}
+            <a class="related-card" href="{{ url_for('article', slug=r.slug) }}">
+                <span class="badge badge-cat">{{ r.category_name or 'Général' }}</span>
+                <h3>{{ r.title }}</h3>
+                <p>{{ r.excerpt[:110] }}{% if r.excerpt | length > 110 %}…{% endif %}</p>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</article>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier' if article else 'Nouvel article' }} — admin{% endblock %}
+
+{% block content %}
+<section class="admin-head">
+    <h1>
+        {% if article %}
+        <i class="fa-solid fa-pen-to-square"></i> Modifier l'article
+        {% else %}
+        <i class="fa-solid fa-plus"></i> Nouvel article
+        {% endif %}
+    </h1>
+    <div class="admin-head-actions">
+        <a class="btn btn-ghost" href="{{ url_for('dashboard') }}"><i class="fa-solid fa-arrow-left"></i> Retour au tableau de bord</a>
+    </div>
+</section>
+
+<section class="panel form-panel">
+    <form method="post" class="article-editor">
+        <label for="title"><i class="fa-solid fa-heading"></i> Titre <em>*</em></label>
+        <input type="text" id="title" name="title" required maxlength="160"
+               value="{{ form.title if form else (article.title if article else '') }}"
+               placeholder="Ex. : Le retour du papier dans un monde tout écran">
+
+        <div class="form-grid">
+            <div>
+                <label for="category_id"><i class="fa-solid fa-layer-group"></i> Rubrique</label>
+                <select id="category_id" name="category_id">
+                    <option value="">— Général —</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}"
+                        {{ 'selected' if (form and form.get('category_id', '') | string == cat.id | string) or (article and article.category_id == cat.id) }}>
+                        {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="image_url"><i class="fa-solid fa-image"></i> URL de l'image (optionnelle)</label>
+                <input type="url" id="image_url" name="image_url"
+                       value="{{ form.image_url if form else (article.image_url if article else '') }}"
+                       placeholder="https://…">
+            </div>
+        </div>
+
+        <label for="excerpt"><i class="fa-solid fa-align-left"></i> Résumé (visible sur la page d'accueil)</label>
+        <textarea id="excerpt" name="excerpt" rows="2"
+                  placeholder="Laisser vide pour générer automatiquement un extrait.">{{ form.excerpt if form else (article.excerpt if article else '') }}</textarea>
+
+        <label for="content"><i class="fa-solid fa-file-lines"></i> Contenu <em>*</em></label>
+        <textarea id="content" name="content" rows="14" required
+                  placeholder="Séparez les paragraphes par une ligne vide.">{{ form.content if form else (article.content if article else '') }}</textarea>
+        <p class="hint"><i class="fa-solid fa-circle-info"></i> Séparez chaque paragraphe par une ligne vide.</p>
+
+        <div class="form-checks">
+            <label class="checkbox">
+                <input type="checkbox" name="published" {{ 'checked' if (form and form.get('published')) or (article and article.published) }}>
+                <i class="fa-solid fa-cloud-arrow-up"></i> Publier (sinon, reste en brouillon)
+            </label>
+            <label class="checkbox">
+                <input type="checkbox" name="featured" {{ 'checked' if (form and form.get('featured')) or (article and article.featured) }}>
+                <i class="fa-solid fa-star"></i> Mettre à la une
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-gold">
+                <i class="fa-solid fa-floppy-disk"></i> {{ 'Enregistrer les modifications' if article else 'Créer l\'article' }}
+            </button>
+            <a class="btn btn-outline" href="{{ url_for('dashboard') }}">Annuler</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

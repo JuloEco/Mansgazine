@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Configurer l'accès admin — Mans&Co Magazine{% endblock %}
+
+{% block content %}
+<section class="auth-wrap">
+    <div class="auth-card card-3d">
+        <span class="auth-icon"><i class="fa-solid fa-key"></i></span>
+        <h1>Première configuration</h1>
+        <p class="auth-sub">
+            Bienvenue dans votre magazine. Choisissez le mot de passe du compte
+            <strong>« Mans&amp;Co »</strong> — il ne sera plus jamais demandé ensuite.
+        </p>
+        <form method="post" autocomplete="new-password">
+            <label for="password">
+                <i class="fa-solid fa-lock"></i> Mot de passe
+                <small>(8 caractères minimum)</small>
+            </label>
+            <input type="password" id="password" name="password" minlength="8" required autocomplete="new-password">
+
+            <label for="confirm">
+                <i class="fa-solid fa-lock"></i> Confirmation
+            </label>
+            <input type="password" id="confirm" name="confirm" minlength="8" required autocomplete="new-password">
+
+            <button type="submit" class="btn btn-gold btn-block">
+                <i class="fa-solid fa-check"></i> Enregistrer le mot de passe
+            </button>
+        </form>
+        <p class="auth-note"><i class="fa-solid fa-circle-info"></i> Ce mot de passe est stocké haché (scrypt) et jamais en clair.</p>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Page introuvable — Mans&Co Magazine{% endblock %}
+
+{% block content %}
+<section class="auth-wrap">
+    <div class="auth-card card-3d notfound">
+        <span class="auth-icon"><i class="fa-regular fa-face-rolling-eyes"></i></span>
+        <h1>404</h1>
+        <p class="auth-sub">Cette page n'existe pas — ou l'article a été retiré de la publication.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-gold btn-block"><i class="fa-solid fa-house"></i> Retour à l'accueil</a>
+    </div>
+</section>
+{% endblock %}

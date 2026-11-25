@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ category.name }} — Mans&Co Magazine{% endblock %}
+
+{% block content %}
+<section class="hero hero-compact">
+    <p class="kicker"><i class="fa-solid fa-layer-group"></i> Rubrique</p>
+    <h1>{{ category.name }}</h1>
+    <p class="hero-sub">{{ pagination.total }} article{{ 's' if pagination.total > 1 }} dans cette rubrique.</p>
+</section>
+
+{% if articles %}
+<div class="article-grid">
+    {% for art in articles %}
+    <article class="card article-card">
+        <a href="{{ url_for('article', slug=art.slug) }}">
+            <div class="card-media">
+                {% if art.image_url %}
+                <img src="{{ art.image_url }}" alt="" loading="lazy">
+                {% else %}
+                <span class="media-pattern"><i class="fa-solid fa-{{ ['newspaper', 'lightbulb', 'earth-europe', 'pen-nib', 'mug-hot', 'camera'][loop.index0 % 6] }} fa-3x"></i></span>
+                {% endif %}
+            </div>
+        </a>
+        <div class="card-body">
+            <h3><a href="{{ url_for('article', slug=art.slug) }}">{{ art.title }}</a></h3>
+            <p>{{ art.excerpt }}</p>
+            <footer class="meta">
+                <span><i class="fa-regular fa-clock"></i> {{ (art.content | wordcount) // 200 + 1 }} min</span>
+                <span><i class="fa-regular fa-eye"></i> {{ art.views }}</span>
+                <span><i class="fa-regular fa-heart"></i> {{ art.likes }}</span>
+            </footer>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% if pagination.pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('category', slug=category.slug, page=pagination.page - 1) }}" class="page-btn"><i class="fa-solid fa-chevron-left"></i></a>
+    {% endif %}
+    {% for p in range(1, pagination.pages + 1) %}
+    <a href="{{ url_for('category', slug=category.slug, page=p) }}" class="page-btn {{ 'current' if p == pagination.page else '' }}">{{ p }}</a>
+    {% endfor %}
+    {% if pagination.has_next %}
+    <a href="{{ url_for('category', slug=category.slug, page=pagination.page + 1) }}" class="page-btn"><i class="fa-solid fa-chevron-right"></i></a>
+    {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<p class="empty-state"><i class="fa-regular fa-folder-open fa-2x"></i><br>Aucun article publié dans cette rubrique pour l'instant.</p>
+{% endif %}
+{% endblock %}

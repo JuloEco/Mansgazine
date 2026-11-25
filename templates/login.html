@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Connexion admin — Mans&Co Magazine{% endblock %}
+
+{% block content %}
+<section class="auth-wrap">
+    <div class="auth-card card-3d">
+        <span class="auth-icon"><i class="fa-solid fa-user-shield"></i></span>
+        <h1>Espace administrateur</h1>
+        <p class="auth-sub">Connectez-vous avec le compte <strong>« Mans&amp;Co »</strong> pour gérer les articles.</p>
+        <form method="post">
+            <label for="username"><i class="fa-solid fa-user"></i> Identifiant</label>
+            <input type="text" id="username" name="username" value="Mans&Co" required autocomplete="username">
+
+            <label for="password"><i class="fa-solid fa-lock"></i> Mot de passe</label>
+            <input type="password" id="password" name="password" required autocomplete="current-password">
+
+            <button type="submit" class="btn btn-gold btn-block">
+                <i class="fa-solid fa-right-to-bracket"></i> Se connecter
+            </button>
+        </form>
+        <p class="auth-note"><i class="fa-solid fa-arrow-left"></i> <a href="{{ url_for('index') }}">Retour au magazine</a></p>
+    </div>
+</section>
+{% endblock %}

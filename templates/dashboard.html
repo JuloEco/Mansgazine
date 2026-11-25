@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord — Mans&Co Magazine{% endblock %}
+
+{% block content %}
+<section class="admin-head">
+    <h1><i class="fa-solid fa-gauge-high"></i> Tableau de bord</h1>
+    <div class="admin-head-actions">
+        <a class="btn btn-gold" href="{{ url_for('article_new') }}"><i class="fa-solid fa-plus"></i> Nouvel article</a>
+        <a class="btn btn-outline" href="{{ url_for('index') }}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Voir le site</a>
+        <form method="post" action="{{ url_for('logout') }}" class="inline-form">
+            <a class="btn btn-ghost" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</a>
+        </form>
+    </div>
+</section>
+
+<div class="stat-grid">
+    <div class="stat card-3d"><i class="fa-solid fa-newspaper"></i><strong>{{ stats.articles }}</strong><span>articles totaux</span></div>
+    <div class="stat card-3d green"><i class="fa-solid fa-cloud-arrow-up"></i><strong>{{ stats.published }}</strong><span>publiés</span></div>
+    <div class="stat card-3d"><i class="fa-regular fa-eye"></i><strong>{{ stats.views }}</strong><span>vues cumulées</span></div>
+    <div class="stat card-3d red"><i class="fa-solid fa-heart"></i><strong>{{ stats.likes }}</strong><span>j'aime</span></div>
+    <div class="stat card-3d"><i class="fa-regular fa-comments"></i><strong>{{ stats.comments }}</strong><span>commentaires</span></div>
+    <div class="stat card-3d"><i class="fa-solid fa-envelope-open-text"></i><strong>{{ stats.subscribers }}</strong><span>abonnés newsletter</span></div>
+</div>
+
+<div class="admin-columns">
+    <section class="panel">
+        <h2><i class="fa-solid fa-list"></i> Tous les articles</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Titre</th><th>Rubrique</th><th>Statut</th><th>Vues</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    {% for art in articles %}
+                    <tr>
+                        <td>
+                            <span class="row-title">{{ art.title }}</span>
+                            {% if art.featured %}<span class="badge badge-gold badge-mini"><i class="fa-solid fa-star"></i></span>{% endif %}<br>
+                            <small class="muted">modifié le {{ art.updated_at }}</small>
+                        </td>
+                        <td>{{ art.category_name or '—' }}</td>
+                        <td>
+                            {% if art.published %}
+                            <span class="badge badge-green"><i class="fa-solid fa-check"></i> En ligne</span>
+                            {% else %}
+                            <span class="badge badge-gray"><i class="fa-solid fa-pen"></i> Brouillon</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ art.views }}</td>
+                        <td class="row-actions">
+                            {% if art.published %}
+                            <a class="icon-btn" href="{{ url_for('article', slug=art.slug) }}" title="Voir en ligne"><i class="fa-solid fa-eye"></i></a>
+                            {% endif %}
+                            <form method="post" class="inline-form" action="{{ url_for('article_toggle_publish', article_id=art.id) }}">
+                                {% if art.published %}
+                                <button class="icon-btn amber" title="Dépublier"><i class="fa-solid fa-cloud-arrow-down"></i></button>
+                                {% else %}
+                                <button class="icon-btn green" title="Publier"><i class="fa-solid fa-cloud-arrow-up"></i></button>
+                                {% endif %}
+                            </form>
+                            <a class="icon-btn" href="{{ url_for('article_edit', article_id=art.id) }}" title="Modifier"><i class="fa-solid fa-pen-to-square"></i></a>
+                            <form method="post" class="inline-form" action="{{ url_for('article_delete', article_id=art.id) }}"
+                                  onsubmit="return confirm('Supprimer définitivement « {{ art.title | e }} » ?');">
+                                <button class="icon-btn danger" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="empty-cell">Aucun article pour l'instant.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="admin-side">
+        <section class="panel">
+            <h2><i class="fa-solid fa-fire"></i> Articles les plus lus</h2>
+            <ol class="top-list">
+                {% for t in top %}
+                <li>
+                    <a href="{{ url_for('article', slug=t.slug) }}">{{ t.title }}</a>
+                    <span class="count-pill"><i class="fa-regular fa-eye"></i> {{ t.views }}</span>
+                </li>
+                {% else %}
+                <li class="muted">Pas encore de données.</li>
+                {% endfor %}
+            </ol>
+        </section>
+
+        <section class="panel">
+            <h2><i class="fa-regular fa-comments"></i> Derniers commentaires</h2>
+            {% for cm in recent_comments %}
+            <div class="comment comment-sm">
+                <div class="comment-avatar"><i class="fa-solid fa-user"></i></div>
+                <div class="comment-body">
+                    <header>
+                        <strong>{{ cm.author }}</strong>
+                        <span class="muted"> sur <a href="{{ url_for('article', slug=cm.article_slug) }}#commentaires">{{ cm.article_title | truncate(30) }}</a></span>
+                        <form method="post" class="inline-form" action="{{ url_for('comment_delete', comment_id=cm.id) }}">
+                            <button type="submit" class="icon-btn danger" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                    </header>
+                    <p>{{ cm.content | truncate(90) }}</p>
+                </div>
+            </div>
+            {% else %}
+            <p class="empty-state small"><i class="fa-regular fa-comment-dots"></i> Aucun commentaire.</p>
+            {% endfor %}
+        </section>
+    </div>
+</div>
+{% endblock %}

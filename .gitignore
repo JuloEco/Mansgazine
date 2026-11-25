@@ -1,0 +1,10 @@
+# Base de données et clé de session (générées au premier lancement)
+magazine.db
+secret.key
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
