@@ -30,12 +30,15 @@ Connexion admin : page **Admin** (footer ou menu), identifiant `Mans&Co`.
 - **Espace public** : page d'accueil avec article à la une, recherche plein
   texte dans les articles, filtres par rubrique, pagination, compteur de vues,
   temps de lecture estimé, bouton « j'aime » (1 par visiteur), article 404.
-- **Commentaires** : les lecteurs commentent les articles ; embargo admin :
-  suppression depuis l'article ou le tableau de bord.
+- **Comptes lecteurs** : inscription gratuite (`/register`) nécessaire pour
+  lire l'article **en entier** et commenter. Les visiteurs voient uniquement
+  une preview (2 premiers blocs + encart paywall élégant).
+- **Commentaires** : réservés aux membres ; suppression par l'admin depuis
+  l'article ou le tableau de bord.
 - **Newsletter** : inscription d'adresses e-mail (anti-doublon).
 - **Espace admin « Mans&Co »** :
   - tableau de bord avec statistiques (articles, vues, likes, commentaires,
-    abonnés) et top des articles les plus lus ;
+    abonnés, membres inscrits) et top des articles les plus lus ;
   - créer / modifier / supprimer chaque article ;
   - publier / dépublier un article (brouillon invisible pour les visiteurs) ;
   - mettre un article **à la une** ;
@@ -53,6 +56,24 @@ static/js/        main.js — menu mobile, bouton j'aime (fetch)
 magazine.db       base SQLite (créée au 1er lancement)
 secret.key        clé de sessions (créée au 1er lancement)
 ```
+
+## Markdown léger dans les articles
+
+Dans le contenu d'un article (séparé par une ligne vide) :
+
+| Syntaxe | Résultat |
+|---|---|
+| `*texte*` | *italique* |
+| `**texte**` | **gras** |
+| `~~texte~~` | ~~barré~~ |
+| `` `code` `` | code |
+| `[texte](https://exemple.fr)` | lien (http/https uniquement) |
+| `# / ## / ###` | titres internes |
+| lignes `- ` | liste à puces |
+| lignes `> ` | citation |
+| ligne `---` | séparateur |
+
+Le HTML brut est **échappé** avant conversion : impossible d'injecter du code.
 
 ## Notes techniques
 

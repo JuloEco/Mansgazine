@@ -51,6 +51,14 @@
         <textarea id="content" name="content" rows="14" required
                   placeholder="Séparez les paragraphes par une ligne vide.">{{ form.content if form else (article.content if article else '') }}</textarea>
         <p class="hint"><i class="fa-solid fa-circle-info"></i> Séparez chaque paragraphe par une ligne vide.</p>
+        <details class="md-help">
+            <summary><i class="fa-solid fa-wand-magic-sparkles"></i> Mise en forme prise en charge (markdown léger)</summary>
+            <code>*italique*</code>, <code>**gras**</code>, <code>~~barré~~</code>, <code>`code`</code>,<br>
+            liens : <code>[texte](https://exemple.fr)</code>,<br>
+            titres : <code># Titre</code>, <code>## Sous-titre</code>,<br>
+            listes : lignes commençant par <code>- </code>, citations par <code>&gt; </code>,<br>
+            séparateur : ligne contenant <code>---</code>
+        </details>
 
         <div class="form-checks">
             <label class="checkbox">

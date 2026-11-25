@@ -4,6 +4,7 @@ Flask + SQLite. Au premier lancement, la base est créée et le site propose
 de définir le mot de passe du compte admin « Mans&Co » via /setup.
 """
 
+import html as html_lib
 import os
 import re
 import secrets
@@ -122,6 +123,14 @@ CREATE TABLE IF NOT EXISTS subscribers (
     email TEXT NOT NULL UNIQUE,
     created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS users (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    username      TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash TEXT NOT NULL,
+    is_admin      INTEGER NOT NULL DEFAULT 0,
+    created_at    TEXT NOT NULL
+);
 """
 
 SEED_CATEGORIES = [
@@ -203,11 +212,17 @@ SEED_ARTICLES = [
         "cat": "gastronomie",
         "excerpt": "Manger selon les saisons sans se ruiner ni passer ses soirées en cuisine : nos repères simples et nos recettes de base.",
         "content": (
-            "Cuisiner de saison, c'est d'abord un problème de marché : privilégier "
-            "trois légumes déjà mûrs plutôt que quinze recettes impossibles.\n\n"
+            "Cuisiner de saison, c'est d'abord un problème de **marché** : "
+            "privilégier *trois légumes déjà mûrs* plutôt que quinze recettes "
+            "impossibles.\n\n"
             "Avec une base de fond (ratatouille, velouté, grains, herbes), on compose "
             "en vingt minutes des assiettes différentes toute la semaine.\n\n"
-            "Et en novembre, le potimarron rôti au thym reste ce qu'il y a de mieux."
+            "### Les trois réflexes à installer\n\n"
+            "- Un velouté express : oignon, légume de saison, bouillon\n"
+            "- Des grains cuits d'avance : riz, semoule ou lentilles\n"
+            "- Une sauce minute : herbes, huile, citron\n\n"
+            "Manger local, ~~c'est un luxe~~, c'est souvent moins cher.\n\n"
+            "Et en novembre, le *potimarron rôti au thym* reste ce qu'il y a de mieux."
         ),
         "published": 1, "featured": 0, "views": 42, "likes": 7,
     },
@@ -277,10 +292,15 @@ def login_required(view):
     return wrapped
 
 
-
-    row = query("SELECT value FROM settings WHERE key = 'admin_password_hash'",
-                one=True)
-    return row["value"] if row else None
+def current_user():
+    if "user" not in g:
+        g.user = None
+        uid = session.get("user_id")
+        if uid is not None:
+            g.user = query("SELECT * FROM users WHERE id = ?", (uid,), one=True)
+            if g.user is None:
+                session.clear()
+    return g.user
 
 
 @app.context_processor
@@ -304,6 +324,61 @@ def inject_year():
     return {"current_year": datetime.now().year}
 
 
+@app.context_processor
+def inject_auth():
+    return {"current_user": current_user(), "is_admin": is_admin()}
+
+
+# ---------------------------------------------------------------------------
+# Markdown léger (italique, gras, liens, citations, listes…)
+# ---------------------------------------------------------------------------
+
+def _md_inline(text):
+    text = html_lib.escape(text or "", quote=False)
+    text = re.sub(r"`([^`]+)`", r"<code>\1</code>", text)
+    text = re.sub(
+        r"\[([^\]]+)\]\((https?://[^)\\s]+)\)",
+        r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>',
+        text)
+    text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
+    text = re.sub(r"\*([^*\n]+)\*", r"<em>\1</em>", text)
+    text = re.sub(r"~~([^~]+)~~", r"<del>\1</del>", text)
+    return text
+
+
+@app.template_filter("md")
+def md_filter(text):
+    out = []
+    for block in (text or "").replace("\r\n", "\n").split("\n\n"):
+        lines = block.split("\n")
+        stripped = [l for l in lines if l.strip()]
+        if not stripped:
+            continue
+        if all(l.lstrip().startswith("- ") for l in stripped):
+            items = "".join(
+                "<li>{}</li>".format(_md_inline(l.lstrip()[2:]))
+                for l in stripped)
+            out.append("<ul>{}</ul>".format(items))
+            continue
+        if all(l.startswith("&gt; ") for l in stripped):
+            quoted = "<br>".join(
+                _md_inline(l[5:]) for l in stripped)
+            out.append("<blockquote>{}</blockquote>".format(quoted))
+            continue
+        if len(stripped) == 1 and stripped[0].strip() in ("---", "***"):
+            out.append("<hr>")
+            continue
+        heading = re.match(r"^(#{1,3})\s+(.*)$", stripped[0])
+        if heading and len(stripped) == 1:
+            level = len(heading.group(1)) + 1
+            out.append("<h{0}>{1}</h{0}>".format(
+                level, _md_inline(heading.group(2))))
+            continue
+        out.append("<p>{}</p>".format(
+            "<br>".join(_md_inline(l) for l in stripped)))
+    return "\n".join(out) if out else ""
+
+
 # ---------------------------------------------------------------------------
 # Gestion du mot de passe admin
 # ---------------------------------------------------------------------------
@@ -314,9 +389,31 @@ def password_hash_stored():
     return row["value"] if row else None
 
 
+def _admin_exists():
+    if query("SELECT 1 FROM users WHERE is_admin = 1", one=True):
+        return True
+    return password_hash_stored() is not None
+
+
+def _log_in(user):
+    session.clear()
+    session["user_id"] = user["id"]
+    session["username"] = user["username"]
+    session.permanent = True
+    if user["is_admin"]:
+        session["admin"] = True
+
+
+def _safe_next(default):
+    dest = request.args.get("next") or default
+    if not dest.startswith("/"):
+        dest = default
+    return dest
+
+
 @app.route("/setup", methods=["GET", "POST"])
 def setup():
-    if password_hash_stored() is not None:
+    if _admin_exists():
         flash("Le mot de passe administrateur est déjà configuré.",
               "info")
         return redirect(url_for("login"))
@@ -329,8 +426,11 @@ def setup():
         elif password != confirm:
             flash("Les deux mots de passe ne correspondent pas.", "error")
         else:
-            execute("INSERT INTO settings (key, value) VALUES (?, ?)",
-                    ("admin_password_hash", generate_password_hash(password)))
+            execute(
+                "INSERT INTO users (username, password_hash, is_admin, "
+                "created_at) VALUES (?, ?, 1, ?)",
+                (ADMIN_USERNAME, generate_password_hash(password),
+                 datetime.now().strftime("%d/%m/%Y à %H:%M")))
             flash("Mot de passe administrateur enregistré. Vous pouvez vous "
                   "connecter.", "success")
             return redirect(url_for("login"))
@@ -339,23 +439,59 @@ def setup():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if password_hash_stored() is None:
+    if not _admin_exists():
         return redirect(url_for("setup"))
     if request.method == "POST":
         username = (request.form.get("username") or "").strip()
         password = request.form.get("password") or ""
-        if username == ADMIN_USERNAME and check_password_hash(
-                password_hash_stored(), password):
-            session.clear()
-            session["admin"] = True
-            session.permanent = True
-            flash("Bienvenue, {} !".format(username), "success")
-            dest = request.args.get("next") or url_for("dashboard")
-            if not dest.startswith("/"):
-                dest = url_for("dashboard")
-            return redirect(dest)
+        user = query("SELECT * FROM users WHERE username = ?",
+                     (username,), one=True)
+        if user and check_password_hash(user["password_hash"], password):
+            _log_in(user)
+            session["admin"] = bool(user["is_admin"])
+            flash("Bienvenue, {} !".format(user["username"]), "success")
+            return redirect(_safe_next(
+                url_for("dashboard") if user["is_admin"] else url_for("index")))
         flash("Identifiant ou mot de passe incorrect.", "error")
     return render_template("login.html")
+
+
+USERNAME_RE = re.compile(r"^[\wÀ-ÿ][\wÀ-ÿ .&'-]{1,39}$")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        password = request.form.get("password") or ""
+        confirm = request.form.get("confirm") or ""
+        if not USERNAME_RE.match(username):
+            flash("Le pseudo doit contenir 2 à 40 caractères (lettres, "
+                  "chiffres, espaces ou . ' - &).", "error")
+        elif username.lower() == ADMIN_USERNAME.lower():
+            flash("Ce pseudo est réservé à la rédaction.", "error")
+        elif query("SELECT 1 FROM users WHERE username = ?",
+                   (username,), one=True):
+            flash("Ce pseudo est déjà pris.", "error")
+        elif len(password) < 8:
+            flash("Le mot de passe doit contenir au moins 8 caractères.",
+                  "error")
+        elif password != confirm:
+            flash("Les deux mots de passe ne correspondent pas.", "error")
+        else:
+            cur = execute(
+                "INSERT INTO users (username, password_hash, is_admin, "
+                "created_at) VALUES (?, ?, 0, ?)",
+                (username, generate_password_hash(password),
+                 datetime.now().strftime("%d/%m/%Y à %H:%M")))
+            _log_in(dict(query(
+                "SELECT * FROM users WHERE id = ?",
+                (cur.lastrowid,), one=True)))
+            flash("Bienvenue, {} ! Votre compte est créé : vous pouvez "
+                  "désormais lire tous les articles en entier.".format(
+                      username), "success")
+            return redirect(_safe_next(url_for("index")))
+    return render_template("register.html")
 
 
 @app.route("/logout")
@@ -458,9 +594,13 @@ def article(slug):
     comments = query(
         "SELECT * FROM comments WHERE article_id = ? ORDER BY created_at DESC",
         (art["id"],))
-    return render_template("article.html", article=art, comments=comments,
-                           related=related,
-                           liked=session.get("likes", {}).get("liked_{}".format(art["id"]), False))
+    blocks = art["content"].replace("\r\n", "\n").split("\n\n")
+    return render_template(
+        "article.html", article=art, comments=comments, related=related,
+        liked=session.get("likes", {}).get("liked_{}".format(art["id"]), False),
+        full_access=current_user() is not None,
+        content_html=md_filter(art["content"]),
+        preview_html=md_filter("\n\n".join(blocks[:2])))
 
 
 @app.route("/article/<slug>/comment", methods=["POST"])
@@ -468,15 +608,18 @@ def comment(slug):
     art = _published_article(slug)
     if art is None:
         abort(404)
-    author = (request.form.get("author") or "").strip()[:60]
+    user = current_user()
+    if user is None:
+        flash("Créez un compte ou connectez-vous pour commenter.", "info")
+        return redirect(url_for("register"))
     content = (request.form.get("content") or "").strip()[:2000]
-    if not author or not content:
-        flash("Merci de renseigner votre nom et votre commentaire.", "error")
+    if not content:
+        flash("Merci de saisir votre commentaire.", "error")
     else:
         execute(
             "INSERT INTO comments (article_id, author, content, created_at) "
             "VALUES (?, ?, ?, ?)",
-            (art["id"], author, content,
+            (art["id"], user["username"], content,
              datetime.now().strftime("%d/%m/%Y à %H:%M")))
         flash("Merci pour votre commentaire !", "success")
     return redirect(url_for("article", slug=slug) + "#commentaires")
@@ -548,6 +691,8 @@ def dashboard():
         "comments": query("SELECT COUNT(*) AS n FROM comments", one=True)["n"],
         "subscribers": query("SELECT COUNT(*) AS n FROM subscribers",
                              one=True)["n"],
+        "members": query("SELECT COUNT(*) AS n FROM users WHERE is_admin = 0",
+                         one=True)["n"],
         "views": query("SELECT COALESCE(SUM(views), 0) AS n FROM articles",
                        one=True)["n"],
         "likes": query("SELECT COALESCE(SUM(likes), 0) AS n FROM articles",

@@ -24,11 +24,20 @@
     </figure>
     {% endif %}
 
-    <div class="article-content">
-        {% for paragraph in article.content.split('\n\n') %}
-        <p>{{ paragraph }}</p>
-        {% endfor %}
+    {% if full_access %}
+    <div class="article-content">{{ content_html | safe }}</div>
+    {% else %}
+    <div class="article-content locked">{{ preview_html | safe }}</div>
+    <div class="paywall card-3d">
+        <i class="fa-solid fa-lock fa-lg"></i>
+        <h2>La suite est réservée aux membres</h2>
+        <p>Créez un compte gratuit pour lire cet article <strong>en entier</strong> et commenter les publications.</p>
+        <div class="paywall-actions">
+            <a class="btn btn-gold" href="{{ url_for('register') }}"><i class="fa-solid fa-user-plus"></i> Créer un compte gratuit</a>
+            <a class="btn btn-outline" href="{{ url_for('login') }}"><i class="fa-solid fa-right-to-bracket"></i> Se connecter</a>
+        </div>
     </div>
+    {% endif %}
 
     <div class="article-actions">
         <button class="btn {{ 'btn-gold' if liked else 'btn-outline' }} like-btn" type="button"
@@ -63,14 +72,21 @@
         <p class="empty-state small"><i class="fa-regular fa-comment"></i> Soyez la première personne à commenter cet article.</p>
         {% endfor %}
 
+        {% if current_user %}
         <form class="comment-form" method="post" action="{{ url_for('comment', slug=article.slug) }}">
             <h3><i class="fa-solid fa-pen-clip"></i> Laisser un commentaire</h3>
             <div class="form-row">
-                <input type="text" name="author" maxlength="60" placeholder="Votre nom" required>
+                <input type="text" name="author_display" value="{{ current_user['username'] }}" disabled>
             </div>
             <textarea name="content" rows="4" maxlength="2000" placeholder="Votre commentaire…" required></textarea>
             <button type="submit" class="btn btn-navy"><i class="fa-solid fa-paper-plane"></i> Envoyer</button>
         </form>
+        {% else %}
+        <div class="comment-gate">
+            <i class="fa-regular fa-comment-dots fa-lg"></i>
+            <a href="{{ url_for('register') }}">Créez un compte</a> ou <a href="{{ url_for('login') }}">connectez-vous</a> pour commenter cet article.
+        </div>
+        {% endif %}
     </section>
 
     {% if related %}

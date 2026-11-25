@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Créer un compte — Mans&Co Magazine{% endblock %}
+
+{% block content %}
+<section class="auth-wrap">
+    <div class="auth-card card-3d">
+        <span class="auth-icon"><i class="fa-solid fa-user-plus"></i></span>
+        <h1>Rejoindre le magazine</h1>
+        <p class="auth-sub">Un compte gratuit vous donne accès à <strong>tous les articles en entier</strong> et aux commentaires.</p>
+        <form method="post">
+            <label for="username"><i class="fa-solid fa-signature"></i> Pseudo <small>(2 à 40 caractères, unique)</small></label>
+            <input type="text" id="username" name="username" minlength="2" maxlength="40" required
+                   value="{{ request.form.get('username', '') }}" autocomplete="username">
+
+            <label for="password"><i class="fa-solid fa-lock"></i> Mot de passe <small>(8 caractères minimum)</small></label>
+            <input type="password" id="password" name="password" minlength="8" required autocomplete="new-password">
+
+            <label for="confirm"><i class="fa-solid fa-lock"></i> Confirmation</label>
+            <input type="password" id="confirm" name="confirm" minlength="8" required autocomplete="new-password">
+
+            <button type="submit" class="btn btn-gold btn-block">
+                <i class="fa-solid fa-heart"></i> Créer mon compte gratuit
+            </button>
+        </form>
+        <p class="auth-note"><i class="fa-solid fa-circle-info"></i> Déjà membre ? <a href="{{ url_for('login') }}">Connectez-vous</a></p>
+    </div>
+</section>
+{% endblock %}

@@ -44,13 +44,18 @@
                 <a href="{{ url_for('about') }}" class="{{ 'active' if request.path == '/a-propos' }}">
                     <i class="fa-solid fa-circle-info"></i> À propos
                 </a>
-                <a href="{{ url_for('dashboard') if is_admin else url_for('login') }}" class="btn btn-outline btn-sm admin-link">
-                    {% if is_admin %}
-                        <i class="fa-solid fa-gauge-high"></i> Tableau de bord
-                    {% else %}
-                        <i class="fa-solid fa-user-lock"></i> Admin
-                    {% endif %}
+                {% if is_admin %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-sm admin-link">
+                    <i class="fa-solid fa-gauge-high"></i> Tableau de bord
                 </a>
+                {% endif %}
+                {% if current_user %}
+                <span class="user-chip" title="Connecté(e)"><i class="fa-solid fa-circle-user"></i> {{ current_user['username'] }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-ghost btn-sm logout-link"><i class="fa-solid fa-right-from-bracket"></i> Sortir</a>
+                {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-gold btn-sm"><i class="fa-solid fa-user-plus"></i> Créer un compte</a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline btn-sm admin-link"><i class="fa-solid fa-right-to-bracket"></i></a>
+                {% endif %}
             </nav>
 
             <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">

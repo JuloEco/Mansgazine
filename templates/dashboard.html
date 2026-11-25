@@ -7,9 +7,7 @@
     <div class="admin-head-actions">
         <a class="btn btn-gold" href="{{ url_for('article_new') }}"><i class="fa-solid fa-plus"></i> Nouvel article</a>
         <a class="btn btn-outline" href="{{ url_for('index') }}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Voir le site</a>
-        <form method="post" action="{{ url_for('logout') }}" class="inline-form">
-            <a class="btn btn-ghost" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</a>
-        </form>
+        <a class="btn btn-ghost" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</a>
     </div>
 </section>
 
@@ -20,6 +18,7 @@
     <div class="stat card-3d red"><i class="fa-solid fa-heart"></i><strong>{{ stats.likes }}</strong><span>j'aime</span></div>
     <div class="stat card-3d"><i class="fa-regular fa-comments"></i><strong>{{ stats.comments }}</strong><span>commentaires</span></div>
     <div class="stat card-3d"><i class="fa-solid fa-envelope-open-text"></i><strong>{{ stats.subscribers }}</strong><span>abonnés newsletter</span></div>
+    <div class="stat card-3d"><i class="fa-solid fa-users"></i><strong>{{ stats.members }}</strong><span>membres inscrits</span></div>
 </div>
 
 <div class="admin-columns">
